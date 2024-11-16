@@ -18,7 +18,7 @@ export default function Page() {
 
   useEffect(() => {
     // Connect to the WebSocket
-    const socket = new WebSocket("ws://localhost:6969/scan-qr");
+    const socket = new WebSocket("ws://api/scan-qr");
 
     socket.onopen = () => {
       setConnectionStatus("Connected");

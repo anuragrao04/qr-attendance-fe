@@ -35,7 +35,7 @@ export default function Page() {
     }
 
     // Open WebSocket connection
-    const socket = new WebSocket(`ws://localhost:6969/create-attendance-session?table=${tableName}`);
+    const socket = new WebSocket(`ws://api/create-attendance-session?table=${tableName}`);
 
     socket.onopen = () => {
       console.log("WebSocket connection established.");
