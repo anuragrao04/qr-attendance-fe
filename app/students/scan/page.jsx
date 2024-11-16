@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Scanner as ScannerComp, outline } from '@yudiel/react-qr-scanner';
 
+
 export default function Page() {
   const searchParams = useSearchParams();
   const srn = searchParams.get("srn");
