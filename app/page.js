@@ -57,8 +57,8 @@ export default function ClassroomInfoForm() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Student Information</CardTitle>
-          <CardDescription>Please fill in your details</CardDescription>
+          <CardTitle>Classroom Information</CardTitle>
+          <CardDescription>Please fill in details of the classroom you are in</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
