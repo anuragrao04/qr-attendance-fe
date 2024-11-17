@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 export default function Component() {
   const [srnParts, setSrnParts] = useState({
-    part1: '1',
+    part1: '2',
     part2: '22',
     part3: 'CS',
     part4: ''
