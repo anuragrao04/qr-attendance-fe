@@ -48,6 +48,8 @@ export default function Page() {
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data)
       if (data.status === "OK") {
+        setDialogMessage("Attendance marked successfully.")
+        setIsDialogOpen(true)
         setErrorMessage(null)
       } else if (data.status === "NOT_OK") {
         setErrorMessage("Scan failed. Please try again.")
