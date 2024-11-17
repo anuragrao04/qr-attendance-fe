@@ -152,7 +152,7 @@ export default function Page() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Attention Required</DialogTitle>
+            <DialogTitle>Attention</DialogTitle>
             <DialogDescription>{dialogMessage}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
