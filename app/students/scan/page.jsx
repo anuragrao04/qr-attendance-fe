@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Scanner as ScannerComp, outline } from '@yudiel/react-qr-scanner'
+import { Scanner as ScannerComp } from '@yudiel/react-qr-scanner'
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -140,7 +140,6 @@ export default function Page() {
                   torch: false,
                   zoom: true,
                   finder: true,
-                  tracker: outline
                 }}
                 allowMultiple={false}
               />
