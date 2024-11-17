@@ -14,7 +14,7 @@ export default function Page() {
     return arr1.length === arr2.length && arr1.every((val, index) => val === arr2[index]);
   }
   useEffect(() => {
-    const condition = !!window.chrome && arraysEqual(Object.keys(window.chrome), ['loadTimes', 'csi', 'app', 'runtime']);
+    const condition = !!window.chrome && arraysEqual(Object.keys(window.chrome), ['loadTimes', 'csi']);
     if (!condition) {
       // it's not chrome
       setIsChrome(false)
