@@ -54,8 +54,8 @@ export default function Component() {
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1</SelectItem>
                     <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="1">1</SelectItem>
                   </SelectContent>
                 </Select>
                 <div className="w-16 text-center font-medium">UG</div>
@@ -110,7 +110,10 @@ export default function Component() {
           <DialogHeader>
             <DialogTitle>{`PES${srnParts.part1}UG${srnParts.part2}${srnParts.part3}${srnParts.part4.padStart(3, '0')}`}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to submit your SRN? Please note that you will not be allowed to give attendance to any other SRN for the next half an hour once submitted
+              Please Check the above SRN once.
+              Are you sure you want to use the above SRN?
+              If you are marking this for a friend, tell them to use their own phone.
+              If their phone is dead, they can approach the teacher to mark them present but NEVER scan it for them as it might be considered as proxy and the teacher will be alerted
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-start">
