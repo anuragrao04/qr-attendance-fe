@@ -1,92 +1,84 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Scanner as ScannerComp, outline } from '@yudiel/react-qr-scanner';
-import Image from "next/image";
+"use client"
+
+import { useEffect, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Scanner as ScannerComp, outline } from '@yudiel/react-qr-scanner'
+import FingerprintJS from '@fingerprintjs/fingerprintjs'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+
+const fpPromise = FingerprintJS.load()
 
 export default function Page() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const srn = searchParams.get("srn")
 
-
-  // enforce chrome browser only
-  //
-  const [isChrome, setIsChrome] = useState(true);
-  function arraysEqual(arr1, arr2) {
-    return arr1.length === arr2.length && arr1.every((val, index) => val === arr2[index]);
-  }
-  useEffect(() => {
-    const condition = !!window.chrome && arraysEqual(Object.keys(window.chrome), ['loadTimes', 'csi']);
-    if (!condition) {
-      // it's not chrome
-      setIsChrome(false)
-    }
-  }, [])
-
-
-  const searchParams = useSearchParams();
-  const srn = searchParams.get("srn");
-
-  // WebSocket state
-  const [socket, setSocket] = useState(null);
-  const [connectionStatus, setConnectionStatus] = useState("Connecting...");
-  const [errorMessage, setErrorMessage] = useState(null);
-
-  // Store the current timestamp of student's device (sent on first connection)
-  const [deviceTimestamp, setDeviceTimestamp] = useState(null);
+  const [socket, setSocket] = useState(null)
+  const [connectionStatus, setConnectionStatus] = useState("connecting")
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [deviceTimestamp, setDeviceTimestamp] = useState(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [dialogMessage, setDialogMessage] = useState("")
 
   useEffect(() => {
-    // Connect to the WebSocket
-    const socket = new WebSocket("wss://attendance.anuragrao.site/api/scan-qr");
+    const socket = new WebSocket("wss://attendance.anuragrao.site/api/scan-qr")
 
-    socket.onopen = () => {
-      setConnectionStatus("Connected");
+    socket.onopen = async () => {
+      setConnectionStatus("connected")
+      const fp = await fpPromise
+      const result = await fp.get()
+      const fingerprintHash = result.visitorId
 
-      // Send the student's device timestamp on connection to help calculate drift
-      const timestamp = Date.now();
-      setDeviceTimestamp(timestamp);
+      const timestamp = Date.now()
+      setDeviceTimestamp(timestamp)
       socket.send(
         JSON.stringify({
           type: "INIT",
           srn: srn,
           clientTime: timestamp.toString(),
+          browserFingerprint: fingerprintHash
         })
-      );
-    };
+      )
+    }
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const data = JSON.parse(event.data)
       if (data.status === "OK") {
-        setErrorMessage(null); // Clear error message if successful
+        setErrorMessage(null)
       } else if (data.status === "NOT_OK") {
-        setErrorMessage("Scan failed. Please try again.");
+        setErrorMessage("Scan failed. Please try again.")
+      } else if (data.status == "error" && data.message == "Invalid browser fingerprint") {
+        setDialogMessage("Please use the same device AND browser for giving attendance. If you are using incognito mode, please switch out of it. If you've gotten a new device, then please contact Anurag (9663006833) to fix this")
+        setIsDialogOpen(true)
       }
-    };
+    }
 
     socket.onerror = () => {
-      setConnectionStatus("Error connecting to WebSocket");
-    };
+      setConnectionStatus("error")
+    }
 
     socket.onclose = () => {
-      setConnectionStatus("Connection closed");
-    };
+      setConnectionStatus("closed")
+    }
 
-    setSocket(socket);
+    setSocket(socket)
 
-    // Cleanup the WebSocket connection when the component is unmounted
     return () => {
-      socket.close();
-    };
-  }, [searchParams]);
+      socket.close()
+    }
+  }, [searchParams])
 
   const handleScan = (data) => {
     if (data) {
-      let [sessionID, scannedRandomID] = data.split(",");
-      sessionID = parseInt(sessionID);
-      scannedRandomID = parseInt(scannedRandomID);
+      let [sessionID, scannedRandomID] = data.split(",")
+      sessionID = parseInt(sessionID)
+      scannedRandomID = parseInt(scannedRandomID)
       if (deviceTimestamp) {
-        // Get current time at scan
-        const scannedAt = Date.now();
-
-        // Send the data to the backend
+        const scannedAt = Date.now()
         socket.send(
           JSON.stringify({
             sessionID: sessionID,
@@ -94,68 +86,90 @@ export default function Page() {
             scannedAt: scannedAt.toString(),
             SRN: srn,
           })
-        );
+        )
       }
     }
-  };
+  }
 
   const handleError = (err) => {
-    console.error(err);
-    setErrorMessage("Error scanning QR code.");
-  };
+    console.error(err)
+    setErrorMessage("Error scanning QR code.")
+  }
 
-  if (!isChrome) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="mb-6 flex items-center justify-center">
-            <Image src="/chrome-icon.png" width={75} height={75} alt="Chrome Icon" />
-          </div>
-          <h1 className="text-2xl font-bold mb-4 text-gray-800">Please Use Google Chrome</h1>
-          <p className="text-gray-600 mb-6">
-            This website is optimized for Google Chrome. To access the site and enjoy the best experience, please switch to
-            Chrome. Incognito mode is not supported.
-          </p>
-          <a
-            href="https://www.google.com/chrome/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition-colors"
-          >
-            Download Chrome
-          </a>
-        </div>
-      </div>
-    )
+  const handleDialogClose = () => {
+    setIsDialogOpen(false)
+    router.back()
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <h2>Scan the QR Code</h2>
-      <div>Status: {connectionStatus}</div>
-      {errorMessage && <div style={{ color: "red" }}>{errorMessage}</div>}
-      <div style={{ width: "100%", maxWidth: "600px", marginBottom: "20px" }}>
-        {/* QR Code Scanner */}
-        <ScannerComp
-          formats={[
-            'qr_code',
-          ]}
-          onScan={(detectedCodes) => {
-            const data = detectedCodes[0].rawValue
-            handleScan(data)
-          }}
-          onError={handleError}
-          components={{
-            audio: false,
-            onOff: false,
-            torch: false,
-            zoom: true,
-            finder: true,
-            tracker: outline
-          }}
-          allowMultiple={false}
-        />
-      </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Scan QR Code</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <ConnectionStatus status={connectionStatus} />
+            {errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+            <div className="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
+              <ScannerComp
+                formats={['qr_code']}
+                onScan={(detectedCodes) => {
+                  const data = detectedCodes[0]?.rawValue
+                  if (data) handleScan(data)
+                }}
+                onError={handleError}
+                components={{
+                  audio: false,
+                  onOff: false,
+                  torch: false,
+                  zoom: true,
+                  finder: true,
+                  tracker: outline
+                }}
+                allowMultiple={false}
+              />
+              <div className="absolute inset-0 border-4 border-blue-500 opacity-50 animate-pulse"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Attention Required</DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleDialogClose}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
+}
+
+function ConnectionStatus({ status }) {
+  const statusConfig = {
+    connecting: { icon: Loader2, color: "text-yellow-500", text: "Connecting..." },
+    connected: { icon: CheckCircle, color: "text-green-500", text: "Connected" },
+    error: { icon: AlertCircle, color: "text-red-500", text: "Connection Error" },
+    closed: { icon: AlertCircle, color: "text-gray-500", text: "Connection Closed" },
+  }
+
+  const { icon: Icon, color, text } = statusConfig[status]
+
+  return (
+    <div className={`flex items-center justify-center space-x-2 ${color}`}>
+      <Icon className={`h-5 w-5 ${status === 'connecting' ? 'animate-spin' : ''}`} />
+      <span className="font-medium">{text}</span>
+    </div>
+  )
 }
