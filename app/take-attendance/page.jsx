@@ -7,6 +7,7 @@ import { flushSync } from "react-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertCircle, Smartphone } from 'lucide-react'
 
 
@@ -19,6 +20,7 @@ export default function Page() {
   const [randomID, setRandomID] = useState(null)
   const [error, setError] = useState(null)
   const [absentees, setAbsentees] = useState([])
+  const [presentees, setPresentees] = useState([])
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function Page() {
     }
 
     const updateQrSize = () => {
-      const height = window.innerHeight * 0.8
+      const height = window.innerHeight * 0.6
       const width = window.innerWidth * 0.7
       setQrSize(Math.min(height, width))
     }
@@ -76,6 +78,12 @@ export default function Page() {
             setAbsentees(data.absentees)
           })
         }
+
+        if (data.presentees) {
+          flushSync(() => {
+            setPresentees(data.presentees)
+          })
+        }
       } catch (err) {
         console.error("Error parsing WebSocket message:", err)
       }
@@ -96,6 +104,21 @@ export default function Page() {
   }, [tableName])
 
   const qrData = sessionID && randomID ? `${sessionID},${randomID}` : "Loading..."
+
+  const StudentList = ({ students }) => (
+    <div className="grid grid-cols-2 gap-2">
+      {students.map((student) => (
+        <div key={student.SRN} className="bg-muted rounded-lg p-2 text-center">
+          <div className="text-4xl font-bold">
+            {student.SRN.slice(-3)}
+          </div>
+          <div className="text-xs truncate mt-1">
+            {student.name}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <div className="px-2 py-4 h-screen">
@@ -153,27 +176,36 @@ export default function Page() {
           </CardContent>
         </Card>
         <Card className="w-1/4 ml-1">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">Absentees</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-1">
-            {absentees.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {absentees.map((absentee) => (
-                  <div key={absentee.SRN} className="bg-muted rounded-lg p-2 text-center">
-                    <div className="text-4xl font-bold">
-                      {absentee.SRN.slice(-3)}
-                    </div>
-                    <div className="text-xs truncate mt-1">
-                      {absentee.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground">No absentees to display.</p>
-            )}
-          </CardContent>
+          <Tabs defaultValue="absentees" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="absentees">Absentees</TabsTrigger>
+              <TabsTrigger value="presentees">Presentees</TabsTrigger>
+            </TabsList>
+            <TabsContent value="absentees">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">Absentees</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[calc(100vh-12rem)] overflow-y-auto p-1">
+                {absentees.length > 0 ? (
+                  <StudentList students={absentees} />
+                ) : (
+                  <p className="text-center text-muted-foreground">No absentees to display.</p>
+                )}
+              </CardContent>
+            </TabsContent>
+            <TabsContent value="presentees">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">Presentees</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[calc(100vh-12rem)] overflow-y-auto p-1">
+                {presentees.length > 0 ? (
+                  <StudentList students={presentees} />
+                ) : (
+                  <p className="text-center text-muted-foreground">No presentees to display.</p>
+                )}
+              </CardContent>
+            </TabsContent>
+          </Tabs>
         </Card>
       </div>
     </div>
