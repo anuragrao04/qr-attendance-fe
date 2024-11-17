@@ -29,7 +29,7 @@ export default function Page() {
     }
 
     const updateQrSize = () => {
-      const height = window.innerHeight * 0.6
+      const height = window.innerHeight * 0.8
       const width = window.innerWidth * 0.7
       setQrSize(Math.min(height, width))
     }
