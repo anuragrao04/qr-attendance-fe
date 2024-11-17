@@ -98,9 +98,12 @@ export default function Component() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" type="submit">
-              Submit
-            </Button>
+            <div className='flex flex-col gap-4'>
+              <div className='font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>Please use the same device AND browser to scan attendance. If you are using incognito mode, please switch out of it. If you've gotten a new device, then please contact Anurag (9663006833)</div>
+              <Button className="w-full" type="submit">
+                Submit
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>

@@ -47,17 +47,20 @@ export default function Page() {
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data)
+      console.log(data)
       if (data.status === "OK") {
         setDialogMessage("Attendance marked successfully.")
         setIsDialogOpen(true)
         setErrorMessage(null)
-      } else if (data.status == "error" && data.message == "Invalid browser fingerprint") {
-        setDialogMessage("Please use the same device AND browser for giving attendance. If you are using incognito mode, please switch out of it. If you've gotten a new device, then please contact Anurag (9663006833) to fix this")
-        setTimeOut(() => {
+      }
+      if (data.status == "error" && data.message == "Invalid browser fingerprint") {
+        setDialogMessage("Please use the same device AND browser for giving attendance.")
+        setTimeout(() => {
           router.back()
-        }, 1000)
+        }, 2000)
         setIsDialogOpen(true)
-      } else if (data.status == "error" && data.message == "Student already marked present") {
+      }
+      if (data.status == "error" && data.message == "Student already marked present") {
         setDialogMessage("You are already marked present for this session. You don't have to scan again.")
         setIsDialogOpen(true)
       }
