@@ -240,7 +240,7 @@ function QRRenderHandler(id, phase, actualDuration, baseDuration, startTime, com
     console.log("Base render time:", baseDuration)
     socket.send(JSON.stringify({
       type: "baseRenderTime",
-      message: baseDuration
+      message: Math.ceil(baseDuration)
     }))
   }
 }
