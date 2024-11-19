@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertCircle, Smartphone } from 'lucide-react'
 
-
+let socket
+let isFirstRandomID = true
 export default function Page() {
   const searchParams = useSearchParams()
   const tableName = searchParams.get("table")
@@ -45,23 +46,28 @@ export default function Page() {
     }
   }, [])
 
+
+  const sendAckForLatencyCalibration = async () => {
+    console.log("Sending ACK")
+    socket.send(JSON.stringify({
+      type: "latency",
+      message: "ACK"
+    }))
+  }
+
   useEffect(() => {
     if (!tableName) {
       setError("Classroom name is required.")
       return
     }
 
-    const socket = new WebSocket(`wss://attendance.anuragrao.site/api/create-attendance-session?table=${tableName}`)
+    socket = new WebSocket(`wss://attendance.anuragrao.site/api/create-attendance-session?table=${tableName}`)
     // const socket = new WebSocket(`ws://localhost:6969/create-attendance-session?table=${tableName}`)
 
     socket.onopen = () => {
       console.log("WebSocket connection established.")
-      const timestamp = Date.now()
-      socket.send(JSON.stringify({
-        type: "INIT",
-        clientTime: timestamp.toString()
-      }))
     }
+
 
     socket.onmessage = (event) => {
       try {
@@ -74,8 +80,14 @@ export default function Page() {
         }
 
         if (data.ID) {
+          if (isFirstRandomID) {
+            isFirstRandomID = false
+            sendAckForLatencyCalibration()
+          }
           flushSync(() => {
             setRandomID(data.ID)
+            // react does some fancy optimization to not make this
+            // a performance hit. so we don't have to worry about it
           })
         }
 
@@ -109,7 +121,7 @@ export default function Page() {
     }
   }, [tableName])
 
-  const qrData = sessionID && randomID ? `${sessionID},${randomID}` : "Loading..."
+  const qrData = randomID ? `${sessionID},${randomID}` : "Loading..."
 
   const StudentList = ({ students }) => (
     <div className="grid grid-cols-2 gap-2">
