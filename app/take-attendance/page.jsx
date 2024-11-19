@@ -234,7 +234,7 @@ export default function Page() {
 }
 
 
-function QRRenderHandler(phase, baseDuration) {
+function QRRenderHandler(id, phase, actualDuration, baseDuration, startTime, commitTime) {
   if (phase == "mount") {
     // send the base render time (worst case render time to the backend for drift caluclation)
     console.log("Base render time:", baseDuration)
