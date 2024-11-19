@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertCircle, Smartphone } from 'lucide-react'
+import { Profiler } from 'react'
 
 let socket
 let isFirstRandomID = true
@@ -51,7 +52,7 @@ export default function Page() {
     console.log("Sending ACK")
     socket.send(JSON.stringify({
       type: "latency",
-      message: "ACK"
+      message: 1
     }))
   }
 
@@ -169,19 +170,21 @@ export default function Page() {
                 </div>
                 <div className="flex justify-center items-center bg-muted rounded-lg w-full h-full">
                   {qrData !== "Loading..." ? (
-                    <Canvas
-                      text={qrData}
-                      options={{
-                        errorCorrectionLevel: "M",
-                        margin: 2,
-                        width: qrSize,
-                        height: qrSize,
-                        color: {
-                          dark: "#000000",
-                          light: "#ffffff",
-                        },
-                      }}
-                    />
+                    <Profiler id="QRCode" onRender={QRRenderHandler}>
+                      <Canvas
+                        text={qrData}
+                        options={{
+                          errorCorrectionLevel: "M",
+                          margin: 2,
+                          width: qrSize,
+                          height: qrSize,
+                          color: {
+                            dark: "#000000",
+                            light: "#ffffff",
+                          },
+                        }}
+                      />
+                    </Profiler>
                   ) : (
                     <div className="flex flex-col items-center space-y-4">
                       <Skeleton className="h-48 w-48" />
@@ -228,4 +231,16 @@ export default function Page() {
       </div>
     </div>
   )
+}
+
+
+function QRRenderHandler(phase, baseDuration) {
+  if (phase == "mount") {
+    // send the base render time (worst case render time to the backend for drift caluclation)
+    console.log("Base render time:", baseDuration)
+    socket.send(JSON.stringify({
+      type: "baseRenderTime",
+      message: baseDuration
+    }))
+  }
 }
