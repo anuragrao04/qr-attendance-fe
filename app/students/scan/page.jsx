@@ -1,121 +1,197 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { Scanner as ScannerComp } from '@yudiel/react-qr-scanner'
-import FingerprintJS from '@fingerprintjs/fingerprintjs'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-
-const fpPromise = FingerprintJS.load()
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { startAuthentication } from "@simplewebauthn/browser";
+import { Scanner as ScannerComp } from "@yudiel/react-qr-scanner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function Page() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const srn = searchParams.get("srn")
+  const router = useRouter();
 
-  const [socket, setSocket] = useState(null)
-  const [connectionStatus, setConnectionStatus] = useState("connecting")
-  const [errorMessage, setErrorMessage] = useState(null)
-  const [deviceTimestamp, setDeviceTimestamp] = useState(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [dialogMessage, setDialogMessage] = useState("")
+  const [socket, setSocket] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState("connecting");
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [deviceTimestamp, setDeviceTimestamp] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const handleAuthenticate = async () => {
+    setIsAuthenticating(true);
+    try {
+      const loginResponse = await fetch("/api/auth/login/begin", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!loginResponse.ok) {
+        throw new Error("Failed to fetch authentication options");
+      }
+
+      const loginOptions = await loginResponse.json();
+      console.log(loginOptions.publicKey)
+
+      const assertionResponse = await startAuthentication({
+        optionsJSON: loginOptions.publicKey,
+      });
+
+      console.log("assertion over")
+
+      const verifyResponse = await fetch("/api/auth/login/finish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(assertionResponse),
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error("WebAuthn login failed");
+      }
+
+      setAuthenticated(true);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Biometric authentication failed. Please try again.");
+      router.push("/students");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   useEffect(() => {
+    if (!authenticated) return;
     const socket = new WebSocket("wss://attendance.anuragrao.site/api/scan-qr")
-    // const socket = new WebSocket("ws://localhost:6969/scan-qr")
+    // const socket = new WebSocket("ws://localhost:6969/scan-qr");
 
-    socket.onopen = async () => {
-      setConnectionStatus("connected")
-      const fp = await fpPromise
-      const result = await fp.get()
-      const fingerprintHash = result.visitorId
-
-      const timestamp = Date.now()
-      setDeviceTimestamp(timestamp)
+    socket.onopen = () => {
+      setConnectionStatus("connected");
+      const timestamp = Date.now();
+      setDeviceTimestamp(timestamp);
       socket.send(
         JSON.stringify({
           type: "INIT",
-          srn: srn,
           clientTime: timestamp.toString(),
-          browserFingerprint: fingerprintHash
         })
-      )
-    }
+      );
+    };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      console.log(data)
+      const data = JSON.parse(event.data);
+
       if (data.status === "OK") {
-        setDialogMessage("Attendance marked successfully.")
-        setIsDialogOpen(true)
-        setErrorMessage(null)
+        setDialogMessage("Attendance marked successfully.");
+        setIsDialogOpen(true);
+        setErrorMessage(null);
+      } else if (
+        data.status === "error" &&
+        data.message === "Student already marked present"
+      ) {
+        setDialogMessage(
+          "You are already marked present for this session. You don't have to scan again."
+        );
+        setIsDialogOpen(true);
+      } else if (data.status === "error") {
+        setErrorMessage(data.message || "An unknown error occurred.");
       }
-      if (data.status == "error" && data.message == "Invalid browser fingerprint") {
-        setDialogMessage("Please use the same device AND browser for giving attendance.")
-        setTimeout(() => {
-          router.back()
-        }, 2000)
-        setIsDialogOpen(true)
-      }
-      if (data.status == "error" && data.message == "Student already marked present") {
-        setDialogMessage("You are already marked present for this session. You don't have to scan again.")
-        setIsDialogOpen(true)
-      }
-    }
+    };
 
     socket.onerror = () => {
-      setConnectionStatus("error")
-    }
+      setConnectionStatus("error");
+      setErrorMessage("WebSocket connection error. Please try again.");
+    };
 
     socket.onclose = () => {
-      setConnectionStatus("closed")
-    }
+      setConnectionStatus("closed");
+    };
 
-    setSocket(socket)
+    setSocket(socket);
 
     return () => {
-      socket.close()
-    }
-  }, [searchParams])
+      socket.close();
+    };
+  }, [authenticated]);
 
   const handleScan = (data) => {
     if (data) {
-      let [sessionID, scannedRandomID] = data.split(",")
-      sessionID = parseInt(sessionID)
-      scannedRandomID = parseInt(scannedRandomID)
+      const [sessionID, scannedRandomID] = data.split(",");
       if (deviceTimestamp) {
-        const scannedAt = Date.now()
+        const scannedAt = Date.now();
         socket.send(
           JSON.stringify({
-            sessionID: sessionID,
-            scannedRandomID: scannedRandomID,
+            sessionID: parseInt(sessionID),
+            scannedRandomID: parseInt(scannedRandomID),
             scannedAt: scannedAt.toString(),
-            SRN: srn,
           })
-        )
+        );
       }
     }
-  }
+  };
 
   const handleError = (err) => {
-    console.error(err)
-    setErrorMessage("Error scanning QR code.")
-  }
+    console.error(err);
+    setErrorMessage("Error scanning QR code.");
+  };
 
   const handleDialogClose = () => {
-    setIsDialogOpen(false)
-    router.back()
+    setIsDialogOpen(false);
+    router.back();
+  };
+
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">
+              Authenticate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 text-center">
+              {errorMessage && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+              <Button
+                onClick={handleAuthenticate}
+                disabled={isAuthenticating}
+                className="w-full"
+              >
+                {isAuthenticating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                {isAuthenticating ? "Authenticating..." : "Start Authentication"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Scan QR Code</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">
+            Scan QR Code
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -129,10 +205,10 @@ export default function Page() {
             )}
             <div className="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
               <ScannerComp
-                formats={['qr_code']}
+                formats={["qr_code"]}
                 onScan={(detectedCodes) => {
-                  const data = detectedCodes[0]?.rawValue
-                  if (data) handleScan(data)
+                  const data = detectedCodes[0]?.rawValue;
+                  if (data) handleScan(data);
                 }}
                 onError={handleError}
                 components={{
@@ -162,7 +238,7 @@ export default function Page() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
 
 function ConnectionStatus({ status }) {
@@ -171,14 +247,14 @@ function ConnectionStatus({ status }) {
     connected: { icon: CheckCircle, color: "text-green-500", text: "Connected" },
     error: { icon: AlertCircle, color: "text-red-500", text: "Connection Error" },
     closed: { icon: AlertCircle, color: "text-gray-500", text: "Connection Closed" },
-  }
+  };
 
-  const { icon: Icon, color, text } = statusConfig[status]
+  const { icon: Icon, color, text } = statusConfig[status];
 
   return (
     <div className={`flex items-center justify-center space-x-2 ${color}`}>
-      <Icon className={`h-5 w-5 ${status === 'connecting' ? 'animate-spin' : ''}`} />
+      <Icon className={`h-5 w-5 ${status === "connecting" ? "animate-spin" : ""}`} />
       <span className="font-medium">{text}</span>
     </div>
-  )
+  );
 }

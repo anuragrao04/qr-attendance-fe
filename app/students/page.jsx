@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { startRegistration } from "@simplewebauthn/browser"
 
 export default function Component() {
   const [srnParts, setSrnParts] = useState({
@@ -16,7 +17,29 @@ export default function Component() {
     part4: ''
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
+  // Check if SRN exists in cookies and redirect if registered
+  useEffect(() => {
+    const checkRegistration = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch('/api/auth/check-if-registered-from-cookie', {
+          method: 'GET', credentials: "include"
+        })
+        const data = await response.json()
+        if (response.ok && data.registered) {
+          router.push('/students/scan') // Redirect if SRN already exists
+        }
+      } catch (error) {
+        console.error('Error checking registration:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    checkRegistration()
+  }, [router])
 
   const handlePartChange = (part, value) => {
     setSrnParts(prev => ({ ...prev, [part]: value }))
@@ -27,12 +50,73 @@ export default function Component() {
     setIsDialogOpen(true)
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const fullSrn = `PES${srnParts.part1}UG${srnParts.part2}${srnParts.part3}${srnParts.part4.padStart(3, '0')}`
-    if (fullSrn.length === 13) {
-      router.push(`/students/scan?srn=${encodeURIComponent(fullSrn)}`)
+    if (fullSrn.length !== 13) return
+
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/auth/check-if-registered-from-header', {
+        method: 'GET', headers: {
+          "SRN": fullSrn
+        }
+      })
+      const data = await response.json()
+      if (response.ok && data.registered) {
+        router.push('/students/scan') // Redirect if SRN already exists
+      }
+    } catch (error) {
+      console.error('Error checking registration:', error)
+    } finally {
+      setIsLoading(false)
     }
+
     setIsDialogOpen(false)
+    setIsLoading(true)
+
+    try {
+      const optionsResponse = await fetch('/api/auth/register/begin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'SRN': fullSrn },
+        credentials: 'include' // Ensure cookies are sent
+      })
+
+      if (!optionsResponse.ok) throw new Error('Failed to start registration')
+
+      const options = await optionsResponse.json()
+      if (options.error) {
+        if (options.error === 'User already registered') {
+          alert("Use the same device/authenticator app you used the first time to register. You can't give attendance from your friend's phone")
+          return
+        } else {
+          alert("Something went wrong. Please try again or contact support.")
+          return
+        }
+
+      }
+      const attResp = await startRegistration({ optionsJSON: options.publicKey })
+
+      const finishResponse = await fetch('/api/auth/register/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'SRN': fullSrn },
+        credentials: 'include',
+        body: JSON.stringify(attResp)
+      })
+
+      if (!finishResponse.ok) throw new Error('Failed to finish registration')
+
+      router.push('/students/scan') // Redirect to scan page after successful registration
+    } catch (error) {
+      console.error('Registration error:', error)
+      alert('Registration failed. Please try again or contact support.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
   return (
@@ -81,7 +165,7 @@ export default function Component() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label htmlFor="lastThreeDigits" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="lastThreeDigits" className="text-sm font-medium leading-none">
                   Last 3 digits
                 </label>
                 <Input
@@ -89,7 +173,6 @@ export default function Component() {
                   placeholder="Enter last 3 digits"
                   value={srnParts.part4}
                   onChange={(e) => handlePartChange('part4', e.target.value.slice(0, 3))}
-                  pattern="\d{3}"
                   maxLength={3}
                   required
                   className="w-full"
@@ -98,8 +181,11 @@ export default function Component() {
             </div>
           </CardContent>
           <CardFooter>
-            <div className='flex flex-col gap-4'>
-              <div className='font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>Please use the same device AND browser to scan attendance. If you are using incognito mode, please switch out of it. If you&apos;ve gotten a new device, then please contact Anurag (9663006833)</div>
+            <div className="flex flex-col gap-4">
+              <div className="text-sm leading-tight">
+                Please use the same device and browser for scanning attendance. Avoid incognito mode.
+                Contact support if you have a new device.
+              </div>
               <Button className="w-full" type="submit">
                 Submit
               </Button>
@@ -113,17 +199,15 @@ export default function Component() {
           <DialogHeader>
             <DialogTitle>{`PES${srnParts.part1}UG${srnParts.part2}${srnParts.part3}${srnParts.part4.padStart(3, '0')}`}</DialogTitle>
             <DialogDescription>
-              Please Check the above SRN once.
-              Are you sure you want to use the above SRN?
-              If you are marking this for a friend, tell them to use their own phone.
-              If their phone is dead, they can approach the teacher to mark them present but NEVER scan it for them as it might be considered as proxy and the teacher will be alerted
+              Please confirm your SRN. Avoid scanning attendance for someone else.
+              Contact your teacher for assistance if required.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-start">
-            <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleConfirm}>
+            <Button onClick={handleConfirm}>
               Confirm
             </Button>
           </DialogFooter>
