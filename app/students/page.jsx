@@ -110,7 +110,7 @@ export default function Component() {
       router.push('/students/scan') // Redirect to scan page after successful registration
     } catch (error) {
       console.error('Registration error:', error)
-      alert('Registration failed. Please try again or contact support.')
+      alert('Registration failed. Please try again or contact support. Error: ' + error)
     } finally {
       setIsLoading(false)
     }
