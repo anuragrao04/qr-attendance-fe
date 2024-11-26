@@ -81,7 +81,7 @@ export default function Component() {
         headers: { 'Content-Type': 'application/json', 'SRN': fullSrn },
         credentials: 'include' // Ensure cookies are sent
       })
-      if (response.status === 400) {
+      if (optionsResponse.status === 400) {
         alert("Use the same device/authenticator app you used the first time to register. You can't give attendance from your friend's phone")
         return
       }
