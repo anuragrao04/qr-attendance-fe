@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { Scanner as ScannerComp } from "@yudiel/react-qr-scanner";
+import { Scanner as ScannerComp, outline } from "@yudiel/react-qr-scanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
@@ -126,6 +126,7 @@ export default function Page() {
 
   const handleScan = (data) => {
     if (data) {
+      setConnectionStatus("scanning");
       const [sessionID, scannedRandomID] = data.split(",");
       if (deviceTimestamp) {
         const scannedAt = Date.now();
@@ -217,6 +218,7 @@ export default function Page() {
                   torch: false,
                   zoom: true,
                   finder: true,
+                  tracker: outline,
                 }}
                 allowMultiple={false}
               />
@@ -247,6 +249,7 @@ function ConnectionStatus({ status }) {
     connected: { icon: CheckCircle, color: "text-green-500", text: "Connected" },
     error: { icon: AlertCircle, color: "text-red-500", text: "Connection Error" },
     closed: { icon: AlertCircle, color: "text-gray-500", text: "Connection Closed" },
+    scanning: { icon: Loader2, color: "text-yellow-500", text: "Scanning...Keep the QR in the frame" }
   };
 
   const { icon: Icon, color, text } = statusConfig[status];
