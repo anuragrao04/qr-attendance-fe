@@ -86,6 +86,7 @@ export default function Component() {
 
       const options = await optionsResponse.json()
       if (options.error) {
+        alert(options.error)
         if (options.error === 'User already registered') {
           alert("Use the same device/authenticator app you used the first time to register. You can't give attendance from your friend's phone")
           return
