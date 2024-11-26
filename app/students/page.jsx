@@ -81,21 +81,20 @@ export default function Component() {
         headers: { 'Content-Type': 'application/json', 'SRN': fullSrn },
         credentials: 'include' // Ensure cookies are sent
       })
-
+      if (response.status === 400) {
+        alert("Use the same device/authenticator app you used the first time to register. You can't give attendance from your friend's phone")
+        return
+      }
       if (!optionsResponse.ok) throw new Error('Failed to start registration')
+
 
       const options = await optionsResponse.json()
       if (options.error) {
-        alert(options.error)
-        if (options.error === 'User already registered') {
-          alert("Use the same device/authenticator app you used the first time to register. You can't give attendance from your friend's phone")
-          return
-        } else {
-          alert("Something went wrong. Please try again or contact support.")
-          return
-        }
-
+        alert("Something went wrong. Please try again or contact support.")
+        return
       }
+
+      console.log(options.publicKey)
       const attResp = await startRegistration({ optionsJSON: options.publicKey })
 
       const finishResponse = await fetch('/api/auth/register/finish', {

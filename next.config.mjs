@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:6969/:path*"
+        destination: "https://attendance.anuragrao.site/api/:path*"
       }
     ]
   }
