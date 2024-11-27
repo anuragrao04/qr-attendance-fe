@@ -122,7 +122,8 @@ export default function Page() {
     }
   }, [tableName])
 
-  const qrData = randomID ? `${sessionID},${randomID}` : "Loading..."
+  const qrData = randomID ? `https://attendance.anuragrao.site/students?${sessionID},${randomID}` : "Loading..."
+  // this is so that the student can scan the qr first to go to the site, then scan again to mark attendance
 
   const StudentList = ({ students }) => (
     <div className="grid grid-cols-2 gap-2">

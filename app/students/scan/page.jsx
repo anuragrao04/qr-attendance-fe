@@ -127,7 +127,8 @@ export default function Page() {
   const handleScan = (data) => {
     if (data) {
       setConnectionStatus("scanning");
-      const [sessionID, scannedRandomID] = data.split(",");
+      const IDs = data.split("?")[1] // index 0 will be the URL
+      const [sessionID, scannedRandomID] = IDs.split(",");
       if (deviceTimestamp) {
         const scannedAt = Date.now();
         socket.send(
