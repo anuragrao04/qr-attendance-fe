@@ -129,7 +129,7 @@ export default function Page() {
       {students.map((student) => (
         <div key={student.SRN} className="bg-muted rounded-lg p-2 text-center">
           <div className="text-4xl font-bold">
-            {student.SRN.slice(-3)}
+            {student.SRN.slice(-5)}
           </div>
           <div className="text-xs truncate mt-1">
             {student.name}

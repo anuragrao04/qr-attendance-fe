@@ -158,6 +158,7 @@ export default function Component() {
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="NU">NU</SelectItem>
                     <SelectItem value="CS">CS</SelectItem>
                     <SelectItem value="EC">EC</SelectItem>
                     <SelectItem value="AM">AM</SelectItem>

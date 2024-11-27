@@ -25,11 +25,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 
 const formSchema = z.object({
-  campus: z.enum(['EC', 'RR']),
-  semester: z.enum(['Sem_1', 'Sem_3', 'Sem_5']),
+  campus: z.enum(['ec', 'rr']),
+  semester: z.enum(['sem_1', 'sem_3', 'sem_5']),
   section: z.string(),
-  branch: z.enum(['CSE', 'ECE', 'CSE_AI_ML_']),
-  cycle: z.enum(['Chemistry_Cycle', 'Physics_Cycle', 'NA']),
+  dept: z.enum(['s___h___pesu', 'cse', 'ece', 'aiml', 'nursing', 'bba']),
+  cycle: z.enum(['chemistry_cycle', 'physics_cycle', 'na']),
 })
 
 export default function ClassroomInfoForm() {
@@ -42,14 +42,14 @@ export default function ClassroomInfoForm() {
       campus: undefined,
       semester: undefined,
       section: undefined,
-      branch: undefined,
+      dept: undefined,
       cycle: undefined,
     },
   })
 
   function onSubmit(values) {
     setIsSubmitting(true)
-    const tableName = values.campus + "_" + values.semester + "_" + values.section + "_" + values.branch + "_" + values.cycle
+    const tableName = values.campus + "_" + values.semester + "_" + values.section + "_" + values.dept + "_" + values.cycle
     router.push(`/take-attendance?table=${tableName}`)
   }
 
@@ -77,13 +77,13 @@ export default function ClassroomInfoForm() {
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="EC" />
+                            <RadioGroupItem value="ec" />
                           </FormControl>
                           <FormLabel className="font-normal">EC</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="RR" />
+                            <RadioGroupItem value="rr" />
                           </FormControl>
                           <FormLabel className="font-normal">RR</FormLabel>
                         </FormItem>
@@ -106,9 +106,9 @@ export default function ClassroomInfoForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Sem_1">1</SelectItem>
-                        <SelectItem value="Sem_3">3</SelectItem>
-                        <SelectItem value="Sem_5">5</SelectItem>
+                        <SelectItem value="sem_1">1</SelectItem>
+                        <SelectItem value="sem_3">3</SelectItem>
+                        <SelectItem value="sem_5">5</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -128,9 +128,9 @@ export default function ClassroomInfoForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => (
-                          <SelectItem key={letter} value={"Section_" + letter}>
-                            {letter}
+                        {Array.from({ length: 26 }, (_, i) => String.fromCharCode(97 + i)).map((letter) => (
+                          <SelectItem key={letter} value={"section_" + letter}>
+                            {letter.toUpperCase()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -141,20 +141,23 @@ export default function ClassroomInfoForm() {
               />
               <FormField
                 control={form.control}
-                name="branch"
+                name="dept"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Branch</FormLabel>
+                    <FormLabel>Department</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select branch" />
+                          <SelectValue placeholder="Select Department" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="CSE">CSE</SelectItem>
-                        <SelectItem value="ECE">ECE</SelectItem>
-                        <SelectItem value="CSE_AI_ML_">CSE AI ML</SelectItem>
+                        <SelectItem value="s___h___pesu">SnH (1st Year B.Tech)</SelectItem>
+                        <SelectItem value="cse">CSE</SelectItem>
+                        <SelectItem value="ece">ECE</SelectItem>
+                        <SelectItem value="aiml">CSE AI ML</SelectItem>
+                        <SelectItem value="nursing">Nursing</SelectItem>
+                        <SelectItem value="bba">BBA</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -176,21 +179,21 @@ export default function ClassroomInfoForm() {
 
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="NA" />
+                            <RadioGroupItem value="na" />
                           </FormControl>
-                          <FormLabel className="font-normal">NA (For 3rd Semester and Above)</FormLabel>
+                          <FormLabel className="font-normal">NA</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="Chemistry_Cycle" />
+                            <RadioGroupItem value="chemistry_cycle" />
                           </FormControl>
-                          <FormLabel className="font-normal">Chemistry</FormLabel>
+                          <FormLabel className="font-normal">Chemistry (For 1st Year B.Tech Only)</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="Physics_Cycle" />
+                            <RadioGroupItem value="physics_cycle" />
                           </FormControl>
-                          <FormLabel className="font-normal">Physics</FormLabel>
+                          <FormLabel className="font-normal">Physics (For 1st Year B.Tech Only)</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
