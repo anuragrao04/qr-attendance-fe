@@ -21,25 +21,6 @@ export default function Component() {
   const router = useRouter()
 
   // Check if SRN exists in cookies and redirect if registered
-  useEffect(() => {
-    const checkRegistration = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch('/api/auth/check-if-registered-from-cookie', {
-          method: 'GET', credentials: "include"
-        })
-        const data = await response.json()
-        if (response.ok && data.registered) {
-          router.push('/students/scan') // Redirect if SRN already exists
-        }
-      } catch (error) {
-        console.error('Error checking registration:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    checkRegistration()
-  }, [router])
 
   const handlePartChange = (part, value) => {
     setSrnParts(prev => ({ ...prev, [part]: value }))
@@ -53,66 +34,8 @@ export default function Component() {
   const handleConfirm = async () => {
     const fullSrn = `PES${srnParts.part1}UG${srnParts.part2}${srnParts.part3}${srnParts.part4.padStart(3, '0')}`
     if (fullSrn.length !== 13) return
-
-
     setIsLoading(true)
-    try {
-      const response = await fetch('/api/auth/check-if-registered-from-header', {
-        method: 'GET', headers: {
-          "SRN": fullSrn
-        }
-      })
-      const data = await response.json()
-      if (response.ok && data.registered) {
-        router.push('/students/scan') // Redirect if SRN already exists
-      }
-    } catch (error) {
-      console.error('Error checking registration:', error)
-    } finally {
-      setIsLoading(false)
-    }
-
-    setIsDialogOpen(false)
-    setIsLoading(true)
-
-    try {
-      const optionsResponse = await fetch('/api/auth/register/begin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'SRN': fullSrn },
-        credentials: 'include' // Ensure cookies are sent
-      })
-      if (optionsResponse.status === 400) {
-        alert("Use the same device/authenticator app you used the first time to register. You can't give attendance from your friend's phone")
-        return
-      }
-      if (!optionsResponse.ok) throw new Error('Failed to start registration')
-
-
-      const options = await optionsResponse.json()
-      if (options.error) {
-        alert("Something went wrong. Please try again or contact support.")
-        return
-      }
-
-      console.log(options.publicKey)
-      const attResp = await startRegistration({ optionsJSON: options.publicKey })
-
-      const finishResponse = await fetch('/api/auth/register/finish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'SRN': fullSrn },
-        credentials: 'include',
-        body: JSON.stringify(attResp)
-      })
-
-      if (!finishResponse.ok) throw new Error('Failed to finish registration')
-
-      router.push('/students/scan') // Redirect to scan page after successful registration
-    } catch (error) {
-      console.error('Registration error:', error)
-      alert('Registration failed. Please try again or contact support. Error: ' + error)
-    } finally {
-      setIsLoading(false)
-    }
+    router.push(`/students/scan?srn=${encodeURIComponent(fullSrn)}`) // Redirect to scan page after successful registration
   }
 
   if (isLoading) {
@@ -183,9 +106,8 @@ export default function Component() {
           </CardContent>
           <CardFooter>
             <div className="flex flex-col gap-4">
-              <div className="text-sm leading-tight">
-                Please use the same device and browser for scanning attendance. Avoid incognito mode.
-                Contact support if you have a new device.
+              <div className="text-sm leading-tight text-red">
+                Biometric authentication has been disabled for demonstration ease
               </div>
               <Button className="w-full" type="submit">
                 Submit

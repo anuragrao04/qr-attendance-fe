@@ -62,8 +62,8 @@ export default function Page() {
       return
     }
 
-    socket = new WebSocket(`wss://attendance.anuragrao.site/api/create-attendance-session?table=${tableName}`)
-    // const socket = new WebSocket(`ws://localhost:6969/create-attendance-session?table=${tableName}`)
+    // socket = new WebSocket(`wss://attendance.anuragrao.site/api/create-attendance-session?table=${tableName}`)
+    socket = new WebSocket(`ws://localhost:6969/create-attendance-session?table=${tableName}`)
 
     socket.onopen = () => {
       console.log("WebSocket connection established.")
@@ -123,7 +123,6 @@ export default function Page() {
   }, [tableName])
 
   const qrData = randomID ? `https://attendance.anuragrao.site/students?${sessionID},${randomID}` : "Loading..."
-  // this is so that the student can scan the qr first to go to the site, then scan again to mark attendance
 
   const StudentList = ({ students }) => (
     <div className="grid grid-cols-2 gap-2">
@@ -239,6 +238,10 @@ function QRRenderHandler(id, phase, actualDuration, baseDuration, startTime, com
   if (phase == "mount") {
     // send the base render time (worst case render time to the backend for drift caluclation)
     console.log("Base render time:", baseDuration)
+    console.log(JSON.stringify({
+      type: "baseRenderTime",
+      message: Math.ceil(baseDuration),
+    }))
     socket.send(JSON.stringify({
       type: "baseRenderTime",
       message: Math.ceil(baseDuration)
