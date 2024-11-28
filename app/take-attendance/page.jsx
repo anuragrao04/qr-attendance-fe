@@ -62,8 +62,8 @@ export default function Page() {
       return
     }
 
-    // socket = new WebSocket(`wss://attendance.anuragrao.site/api/create-attendance-session?table=${tableName}`)
-    socket = new WebSocket(`ws://localhost:6969/create-attendance-session?table=${tableName}`)
+    socket = new WebSocket(`wss://attendance.anuragrao.site/api/create-attendance-session?table=${tableName}`)
+    // socket = new WebSocket(`ws://localhost:6969/create-attendance-session?table=${tableName}`)
 
     socket.onopen = () => {
       console.log("WebSocket connection established.")
