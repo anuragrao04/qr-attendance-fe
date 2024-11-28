@@ -65,6 +65,9 @@ export default function Page() {
         setDialogMessage("You are already marked present for this session. You don't have to scan again.")
         setIsDialogOpen(true)
       }
+      if (data.status == "pbkac") {
+        alert(data.message)
+      }
     }
 
     socket.onerror = () => {

@@ -103,6 +103,10 @@ export default function Page() {
             setPresentees(data.presentees)
           })
         }
+
+        if (data.error) {
+          alert(data.error)
+        }
       } catch (err) {
         console.error("Error parsing WebSocket message:", err)
       }
