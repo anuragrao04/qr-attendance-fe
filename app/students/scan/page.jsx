@@ -25,7 +25,7 @@ export default function Page() {
   const [dialogMessage, setDialogMessage] = useState("")
 
   useEffect(() => {
-    const socket = new WebSocket("wss://attendance.anuragrao.site/api/scan-qr")
+    const socket = new WebSocket("wss://staging.attendance.anuragrao.site/api/scan-qr")
     // const socket = new WebSocket("ws://localhost:6969/scan-qr")
 
     socket.onopen = async () => {
