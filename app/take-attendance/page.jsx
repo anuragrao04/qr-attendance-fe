@@ -126,7 +126,7 @@ export default function Page() {
     }
   }, [tableName])
 
-  const qrData = randomID ? `https://attendance.anuragrao.site/students?${sessionID},${randomID}` : "Loading..."
+  const qrData = randomID ? `https://staging.attendance.anuragrao.site/students?${sessionID},${randomID}` : "Loading..."
 
   const StudentList = ({ students }) => (
     <div className="grid grid-cols-2 gap-2">

@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://attendance.anuragrao.site/api/:path*"
+        destination: "https://staging.attendance.anuragrao.site/api/:path*"
       }
     ]
   }
