@@ -26,7 +26,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 
 const formSchema = z.object({
   campus: z.enum(['ec', 'rr']),
-  semester: z.enum(['sem_1', 'sem_3', 'sem_5']),
+  semester: z.enum(['sem_2', 'sem_4', 'sem_6']),
   section: z.string(),
   dept: z.enum(['s___h___pesu', 'cse', 'ece', 'aiml', 'nursing', 'bba']),
   cycle: z.enum(['chemistry_cycle', 'physics_cycle', 'na']),
@@ -106,9 +106,9 @@ export default function ClassroomInfoForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="sem_1">1</SelectItem>
-                        <SelectItem value="sem_3">3</SelectItem>
-                        <SelectItem value="sem_5">5</SelectItem>
+                        <SelectItem value="sem_2">2</SelectItem>
+                        <SelectItem value="sem_4">4</SelectItem>
+                        <SelectItem value="sem_6">6</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
