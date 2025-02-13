@@ -29,7 +29,6 @@ const formSchema = z.object({
   semester: z.enum(['sem_2', 'sem_4', 'sem_6']),
   section: z.string(),
   dept: z.enum(['s___h___pesu', 'cse', 'ece', 'aiml', 'nursing', 'bba']),
-  cycle: z.enum(['chemistry_cycle', 'physics_cycle', 'na']),
 })
 
 export default function ClassroomInfoForm() {
@@ -43,13 +42,12 @@ export default function ClassroomInfoForm() {
       semester: undefined,
       section: undefined,
       dept: undefined,
-      cycle: undefined,
     },
   })
 
   function onSubmit(values) {
     setIsSubmitting(true)
-    const tableName = values.campus + "_" + values.semester + "_" + values.section + "_" + values.dept + "_" + values.cycle
+    const tableName = values.campus + "_" + values.semester + "_" + values.section + "_" + values.dept
     router.push(`/take-attendance?table=${tableName}`)
   }
 
@@ -160,43 +158,6 @@ export default function ClassroomInfoForm() {
                         <SelectItem value="bba">BBA</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="cycle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cycle</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="na" />
-                          </FormControl>
-                          <FormLabel className="font-normal">NA</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="chemistry_cycle" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Chemistry (For 1st Year B.Tech Only)</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="physics_cycle" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Physics (For 1st Year B.Tech Only)</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
