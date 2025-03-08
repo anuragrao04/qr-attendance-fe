@@ -41,13 +41,13 @@ export default function Page() {
       }
 
       const loginOptions = await loginResponse.json();
-      console.log(loginOptions.publicKey)
+      console.log(loginOptions.publicKey);
 
       const assertionResponse = await startAuthentication({
         optionsJSON: loginOptions.publicKey,
       });
 
-      console.log("assertion over")
+      console.log("assertion over");
 
       const verifyResponse = await fetch("/api/auth/login/finish", {
         method: "POST",
@@ -73,7 +73,7 @@ export default function Page() {
 
   useEffect(() => {
     if (!authenticated) return;
-    const socket = new WebSocket("wss://attendance.anuragrao.site/api/scan-qr")
+    const socket = new WebSocket("wss://attendance.anuragrao.site/api/scan-qr");
     // const socket = new WebSocket("ws://localhost:6969/scan-qr");
 
     socket.onopen = () => {
@@ -84,7 +84,7 @@ export default function Page() {
         JSON.stringify({
           type: "INIT",
           clientTime: timestamp.toString(),
-        })
+        }),
       );
     };
 
@@ -100,7 +100,7 @@ export default function Page() {
         data.message === "Student already marked present"
       ) {
         setDialogMessage(
-          "You are already marked present for this session. You don't have to scan again."
+          "You are already marked present for this session. You don't have to scan again.",
         );
         setIsDialogOpen(true);
       } else if (data.status === "error") {
@@ -127,7 +127,7 @@ export default function Page() {
   const handleScan = (data) => {
     if (data) {
       setConnectionStatus("scanning");
-      const IDs = data.split("?")[1] // index 0 will be the URL
+      const IDs = data.split("?")[1]; // index 0 will be the URL
       const [sessionID, scannedRandomID] = IDs.split(",");
       if (deviceTimestamp) {
         const scannedAt = Date.now();
@@ -136,7 +136,7 @@ export default function Page() {
             sessionID: parseInt(sessionID),
             scannedRandomID: parseInt(scannedRandomID),
             scannedAt: scannedAt.toString(),
-          })
+          }),
         );
       }
     }
@@ -144,7 +144,7 @@ export default function Page() {
 
   const handleError = (err) => {
     console.error(err);
-    setErrorMessage("Error scanning QR code.");
+    setErrorMessage("Error scanning QR code. Try reloading");
   };
 
   const handleDialogClose = () => {
@@ -178,7 +178,9 @@ export default function Page() {
                 {isAuthenticating ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
-                {isAuthenticating ? "Authenticating..." : "Start Authentication"}
+                {isAuthenticating
+                  ? "Authenticating..."
+                  : "Start Authentication"}
               </Button>
             </div>
           </CardContent>
@@ -246,18 +248,40 @@ export default function Page() {
 
 function ConnectionStatus({ status }) {
   const statusConfig = {
-    connecting: { icon: Loader2, color: "text-yellow-500", text: "Connecting..." },
-    connected: { icon: CheckCircle, color: "text-green-500", text: "Connected" },
-    error: { icon: AlertCircle, color: "text-red-500", text: "Connection Error" },
-    closed: { icon: AlertCircle, color: "text-gray-500", text: "Connection Closed" },
-    scanning: { icon: Loader2, color: "text-yellow-500", text: "Scanning...Keep the QR in the frame" }
+    connecting: {
+      icon: Loader2,
+      color: "text-yellow-500",
+      text: "Connecting...",
+    },
+    connected: {
+      icon: CheckCircle,
+      color: "text-green-500",
+      text: "Connected",
+    },
+    error: {
+      icon: AlertCircle,
+      color: "text-red-500",
+      text: "Connection Error",
+    },
+    closed: {
+      icon: AlertCircle,
+      color: "text-gray-500",
+      text: "Connection Closed",
+    },
+    scanning: {
+      icon: Loader2,
+      color: "text-yellow-500",
+      text: "Scanning...Keep the QR in the frame",
+    },
   };
 
   const { icon: Icon, color, text } = statusConfig[status];
 
   return (
     <div className={`flex items-center justify-center space-x-2 ${color}`}>
-      <Icon className={`h-5 w-5 ${status === "connecting" ? "animate-spin" : ""}`} />
+      <Icon
+        className={`h-5 w-5 ${status === "connecting" ? "animate-spin" : ""}`}
+      />
       <span className="font-medium">{text}</span>
     </div>
   );
