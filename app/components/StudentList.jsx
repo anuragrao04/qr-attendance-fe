@@ -97,6 +97,8 @@ const StudentItem = React.memo(({ student, onToggle }) => {
   );
 });
 
+StudentItem.displayName = "StudentItem";
+
 // Memoized StudentList component
 const StudentList = React.memo(({ students, onToggleAttendance }) => {
   const handleToggle = useCallback(
@@ -118,5 +120,7 @@ const StudentList = React.memo(({ students, onToggleAttendance }) => {
     </div>
   );
 });
+
+StudentList.displayName = "StudentList";
 
 export default StudentList;
